@@ -1,5 +1,5 @@
 class AppRoutes {
-  static const homePage = "/";
+  static const homePage = "/home_screen";
   static const allTickets = "/all_tickets";
   static const ticketScreen = "/ticket_view";
   static const allHotels = "/all_hotels";

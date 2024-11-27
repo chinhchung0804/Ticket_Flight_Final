@@ -1,4 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:ticket_app_final/base/res/media.dart';
@@ -18,9 +17,14 @@ class _LogInState extends State<LogIn> {
   final TextEditingController mailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  bool isLoading = false;
 
   Future<void> signIn() async {
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      isLoading = true;
+    });
 
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -51,6 +55,10 @@ class _LogInState extends State<LogIn> {
         content: Text("Unexpected error: $e"),
         backgroundColor: Colors.redAccent,
       ));
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -69,7 +77,7 @@ class _LogInState extends State<LogIn> {
                   borderRadius: BorderRadius.circular(12),
                   image: const DecorationImage(
                     fit: BoxFit.cover,
-                    image: AssetImage(AppMedia.logoSignUp),
+                    image: AssetImage(AppMedia.logo),
                   ),
                 ),
               ),
@@ -84,32 +92,37 @@ class _LogInState extends State<LogIn> {
                     _buildTextField(
                       controller: mailController,
                       hintText: "Email",
-                      validator: (value) => value!.isEmpty ? 'Please enter your email' : null,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter your email' : null,
                     ),
                     const SizedBox(height: 30.0),
                     _buildTextField(
                       controller: passwordController,
                       hintText: "Password",
                       obscureText: true,
-                      validator: (value) => value!.isEmpty ? 'Please enter your password' : null,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter your password' : null,
                     ),
                     const SizedBox(height: 30.0),
-                    GestureDetector(
-                      onTap: signIn,
-                      child: Container(
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Sign In',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
+                    isLoading
+                        ? const CircularProgressIndicator()
+                        : GestureDetector(
+                            onTap: signIn,
+                            child: Container(
+                              padding: const EdgeInsets.all(15),
+                              decoration: BoxDecoration(
+                                color: Colors.blue,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 18),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -150,7 +163,8 @@ class _LogInState extends State<LogIn> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ForgotPassword()),
+                  MaterialPageRoute(
+                      builder: (context) => const ForgotPassword()),
                 );
               },
               child: const Text(

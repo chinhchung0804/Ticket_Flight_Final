@@ -1,3 +1,4 @@
+
 class AppMedia {
   static const _baseImage = "assets/images";
   static const logo = '$_baseImage/logo.jpg';
@@ -6,3 +7,4 @@ class AppMedia {
   static const logoVisa = '$_baseImage/visa_logo.jpg';
   static const logoSignUp = '$_baseImage/flight.jpg';
 }
+
