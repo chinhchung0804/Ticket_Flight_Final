@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:ticket_app_final/base/res/style/app_style.dart';
 
 class TextStyleThird extends StatelessWidget {
   final String text;
-  final bool? isColor;
-  const TextStyleThird({super.key, required this.text, this.isColor});
+  final bool isColor;
+  final Color color; // Add color parameter
+
+  const TextStyleThird({
+    super.key,
+    required this.text,
+    required this.isColor,
+    this.color = Colors.white, // Pass color
+  });
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: isColor==null? AppStyles.headLineStyle3.copyWith(color: Colors.white):AppStyles.headLineStyle3,
+      style: TextStyle(
+        color: isColor ? color : Colors.black, // Use color property
+        fontSize: isColor ? 18 : 16, // Adjust based on isColor flag
+        fontWeight: FontWeight.bold,
+      ),
     );
   }
 }

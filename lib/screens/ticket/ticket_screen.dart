@@ -1,211 +1,260 @@
-import 'package:barcode_widget/barcode_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:ticket_app_final/base/res/media.dart';
 import 'package:ticket_app_final/base/res/style/app_style.dart';
-import 'package:ticket_app_final/base/utils/all_json.dart'; // Import dữ liệu
-import 'package:ticket_app_final/base/widgets/app_column_text_layout.dart';
 import 'package:ticket_app_final/base/widgets/app_layout_build_widget.dart';
+import 'package:ticket_app_final/base/widgets/big_circle.dart';
 import 'package:ticket_app_final/base/widgets/ticket_view.dart';
-import 'package:ticket_app_final/screens/search/widgets/app_ticket_tabs.dart';
-import 'package:ticket_app_final/screens/ticket/widgets/ticket_positined_circle.dart';
+import 'package:ticket_app_final/base/widgets/app_column_text_layout.dart';
+import 'package:ticket_app_final/models/flight.dart';
+import 'package:barcode_widget/barcode_widget.dart';
 
-// Thêm các hàm Firebase
-Future<void> addTicketData() async {
-  FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  for (var ticket in ticketList) {
-    await _firestore.collection('Flights').add({
-      'from': ticket['from'],
-      'to': ticket['to'],
-      'flying_time': ticket['flying_time'],
-      'date': ticket['date'],
-      'thoi_gian_khoi_hanh': ticket['thoi_gian_khoi_hanh'],
-      'Number': ticket['Number'],
-    });
-  }
-
-  print("Ticket data added successfully!");
-}
-
-Future<void> addHotelData() async {
-  FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  for (var hotel in hotelList) {
-    await _firestore.collection('Hotels').add({
-      'image': hotel['image'],
-      'place': hotel['place'],
-      'destination': hotel['destination'],
-      'price': hotel['price'],
-      'detail': hotel['detail'],
-      'images': hotel['images'],
-    });
-  }
-
-  print("Hotel data added successfully!");
-}
-
-class TicketScreen extends StatefulWidget {
+class TicketScreen extends StatelessWidget {
   const TicketScreen({super.key});
 
-  @override
-  State<TicketScreen> createState() => _TicketScreenState();
-} 
+  // Hàm thêm vé vào Firestore
+  Future<void> _addTicketToUserOrders(Flight flight, BuildContext context) async {
+    try {
+      // Lấy người dùng hiện tại
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to book tickets.')),
+        );
+        return;
+      }
 
-class _TicketScreenState extends State<TicketScreen> {
-  late int ticketIndex = 0;
+      // Thời gian đặt vé
+      final bookingTime = Timestamp.now();
 
-  @override
-  void didChangeDependencies() {
-    if (ModalRoute.of(context)!.settings.arguments != null) {
-      var args = ModalRoute.of(context)!.settings.arguments as Map;
-      ticketIndex = args["index"];
+      // Dữ liệu của vé
+      final ticketData = {
+        'from': flight.fromName,
+        'to': flight.toName,
+        'flightNumber': flight.Number,
+        'date': flight.date,
+        'departureTime': flight.departureTime,
+        'flyingTime': flight.flyingTime,
+        'price': flight.price,
+        'bookingTime': bookingTime,
+      };
+
+      // Lưu vé vào subcollection "orders" của người dùng
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(user.uid)
+          .collection('orders')
+          .add(ticketData);
+
+      // Thông báo thành công
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ticket added to your orders successfully!')),
+      );
+    } catch (e) {
+      // Thông báo lỗi
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to book ticket: $e')),
+      );
     }
-    super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Lấy dữ liệu từ arguments
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    if (args == null || !args.containsKey('index') || !args.containsKey('flightList')) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("Ticket Details"),
+          backgroundColor: AppStyles.bgColor,
+        ),
+        body: const Center(
+          child: Text('No flight data found.'),
+        ),
+      );
+    }
+
+    final int index = args['index'];
+    final List<Flight> flightList = args['flightList'];
+    final Flight flight = flightList[index];
+
     return Scaffold(
       backgroundColor: AppStyles.bgColor,
       appBar: AppBar(
-        title: const Text("Tickets"),
+        title: const Text("Ticket Details"),
         backgroundColor: AppStyles.bgColor,
       ),
-      body: Stack(
+      body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          ListView(
-            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-            children: [
-              const AppTicketTabs(
-                firstTab: "Upcoming",
-                secondTab: "Previous",
-              ),
-              const SizedBox(height: 20,),
-              Container(
-                padding: const EdgeInsets.only(left: 16),
-                child: TicketView(ticket: ticketList[ticketIndex], isColor: true),
-              ),
-              const SizedBox(height: 1,), 
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-                color: AppStyles.ticketColor,
-                child: Column(
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AppColumnTextLayout(
-                            topText: "Flutter DB", 
-                            bottomText: "Passenger", 
-                            alignment: CrossAxisAlignment.start,
-                            isColor: true,
-                        ),
-                        AppColumnTextLayout(
-                            topText: "5221 36869", 
-                            bottomText: "Passport", 
-                            alignment: CrossAxisAlignment.end,
-                            isColor: true,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20,),
-                    const AppLayoutBuildWidget(randomDivider: 15, width: 5, isColor: false),
-                    const SizedBox(height: 20,),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AppColumnTextLayout(
-                            topText: "2465 658494046865", 
-                            bottomText: "NUmber of E-ticket", 
-                            alignment: CrossAxisAlignment.start,
-                            isColor: true,
-                        ),
-                        AppColumnTextLayout(
-                            topText: "B46859", 
-                            bottomText: "Booking code", 
-                            alignment: CrossAxisAlignment.end,
-                            isColor: true,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20,),
-                    const AppLayoutBuildWidget(randomDivider: 15, width: 5, isColor: false),
-                    const SizedBox(height: 20,),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          children: [
-                            Row(
-                              children: [
-                                Image.asset(
-                                  AppMedia.logoVisa,
-                                  scale: 3,
-                                ), 
-                                Text(" *** 24462", style: AppStyles.headLineStyle3,)
-                              ],
-                            ),
-                            Text("Payment method", style: AppStyles.headLineStyle4,)
-                          ]
-                        ),
-                        const AppColumnTextLayout(
-                            topText: "1.000.000d",
-                            bottomText: "Price", 
-                            alignment: CrossAxisAlignment.end,
-                            isColor: true,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-          
-              const SizedBox(height: 1,), 
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                margin: const EdgeInsets.symmetric(horizontal: 15),
-                decoration: BoxDecoration(
-                  color: AppStyles.ticketColor,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(21),
-                    bottomRight: Radius.circular(21),
-                  )
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: BarcodeWidget(
-                      height: 70,
-                      data: "https://dbestech.com", 
-                      barcode: Barcode.code128(),
-                      drawText: false,
-                      color: AppStyles.textColor,
-                      width: double.infinity,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20,),
+          // Hiển thị vé
+          TicketView(
+            ticket: flight,
+            wholeScreen: true,
+            isColor: false,
+          ),
+          const SizedBox(height: 24),
 
-              // Thêm nút để gọi hàm addTicketData và addHotelData
-              ElevatedButton(
-                onPressed: () {
-                  addTicketData();  // Thêm dữ liệu vé máy bay vào Firestore
-                  addHotelData();   // Thêm dữ liệu khách sạn vào Firestore
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Dữ liệu đã được thêm vào Firestore!')),
-                  );
-                },
-                child: Text('Add Data to Firestore'),
+          // Chi tiết vé
+          Container(
+            decoration: BoxDecoration(
+              color: AppStyles.ticketColor,
+              borderRadius: BorderRadius.circular(21),
+            ),
+            child: Column(
+              children: [
+                _buildTicketDetails(flight),
+                _buildBarcodeSection(flight.Number),
+                _buildBuyButton(flight, context),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Hàm tạo chi tiết vé
+  Widget _buildTicketDetails(Flight flight) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 16),
+          child: Row(
+            children: [
+              AppColumnTextLayout(
+                topText: flight.fromName,
+                bottomText: "From",
+                alignment: CrossAxisAlignment.start,
+                isColor: false,
+              ),
+              const Spacer(),
+              AppColumnTextLayout(
+                topText: flight.toName,
+                bottomText: "To",
+                alignment: CrossAxisAlignment.end,
+                isColor: false,
               ),
             ],
           ),
-          const TicketPositinedCircle(pos: true),
-          const TicketPositinedCircle(pos: null),
-        ],
+        ),
+        Row(
+          children: [
+            BigCircle(isRight: false, isColor: true),
+            Expanded(
+              child: AppLayoutBuildWidget(
+                randomDivider: 16,
+                width: 6,
+                isColor: true,
+              ),
+            ),
+            BigCircle(isRight: true, isColor: true),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 16),
+          child: Row(
+            children: [
+              AppColumnTextLayout(
+                topText: flight.Number,
+                bottomText: "Flight Number",
+                alignment: CrossAxisAlignment.start,
+                isColor: false,
+              ),
+              const Spacer(),
+              AppColumnTextLayout(
+                topText: flight.date,
+                bottomText: "Date",
+                alignment: CrossAxisAlignment.end,
+                isColor: false,
+              ),
+            ],
+          ),
+        ),
+        Row(
+          children: [
+            BigCircle(isRight: false, isColor: true),
+            Expanded(
+              child: AppLayoutBuildWidget(
+                randomDivider: 16,
+                width: 6,
+                isColor: true,
+              ),
+            ),
+            BigCircle(isRight: true, isColor: true),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 16),
+          child: Row(
+            children: [
+              AppColumnTextLayout(
+                topText: flight.flyingTime,
+                bottomText: "Flying Time",
+                alignment: CrossAxisAlignment.start,
+                isColor: false,
+              ),
+              const Spacer(),
+              AppColumnTextLayout(
+                topText: flight.departureTime,
+                bottomText: "Departure Time",
+                alignment: CrossAxisAlignment.end,
+                isColor: false,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Hàm tạo mã vạch
+  Widget _buildBarcodeSection(String flightNumber) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      margin: const EdgeInsets.symmetric(horizontal: 15),
+      decoration: BoxDecoration(
+        color: AppStyles.ticketColor,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(21),
+          bottomRight: Radius.circular(21),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: BarcodeWidget(
+          height: 120,
+          data: flightNumber,
+          barcode: Barcode.code128(),
+          drawText: false,
+          color: AppStyles.textColor,
+          width: double.infinity,
+          errorBuilder: (context, error) => Center(child: Text(error)),
+        ),
+      ),
+    );
+  }
+
+  // Hàm tạo nút mua vé
+  Widget _buildBuyButton(Flight flight, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: ElevatedButton(
+        onPressed: () {
+          _addTicketToUserOrders(flight, context);
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blueGrey,
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: Text(
+          'Buy Ticket for ${flight.price.toStringAsFixed(3)}đ',
+          style: const TextStyle(fontSize: 16, color: Colors.white),
+        ),
       ),
     );
   }

@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:ticket_app_final/base/res/media.dart';
 import 'package:ticket_app_final/base/res/style/app_style.dart';
 import 'package:ticket_app_final/screens/home/home_screen.dart';
 import './login.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -15,10 +16,9 @@ class SignUp extends StatefulWidget {
 
 class _SignUpState extends State<SignUp> {
   String email = "", password = "", name = "";
-  TextEditingController nameController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  TextEditingController mailController = TextEditingController();
-
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController mailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   /// Kiểm tra kết nối mạng
@@ -38,14 +38,25 @@ class _SignUpState extends State<SignUp> {
   Future<void> registration() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Kiểm tra kết nối mạng trước khi thực hiện
     if (!await checkInternet()) return;
 
     try {
+      // Tạo người dùng với email và mật khẩu
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
       if (userCredential.user != null) {
+        // Lưu thông tin người dùng vào Firestore
+        await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'name': name,
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Hiển thị thông báo đăng ký thành công
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
             "Registered Successfully!",
@@ -57,7 +68,7 @@ class _SignUpState extends State<SignUp> {
         // Điều hướng đến HomeScreen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => const LogIn()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -102,7 +113,7 @@ class _SignUpState extends State<SignUp> {
                   borderRadius: BorderRadius.circular(12),
                   image: const DecorationImage(
                     fit: BoxFit.cover,
-                    image: AssetImage(AppMedia.logoSignUp),
+                    image: AssetImage(AppMedia.logo),
                   ),
                 ),
               ),
@@ -117,20 +128,23 @@ class _SignUpState extends State<SignUp> {
                     _buildTextField(
                       controller: nameController,
                       hintText: "Name",
-                      validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter your name' : null,
                     ),
                     const SizedBox(height: 30.0),
                     _buildTextField(
                       controller: mailController,
                       hintText: "Email",
-                      validator: (value) => value!.isEmpty ? 'Please enter your email' : null,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter your email' : null,
                     ),
                     const SizedBox(height: 30.0),
                     _buildTextField(
                       controller: passwordController,
                       hintText: "Password",
                       obscureText: true,
-                      validator: (value) => value!.isEmpty ? 'Please enter your password' : null,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter your password' : null,
                     ),
                     const SizedBox(height: 30.0),
                     GestureDetector(
@@ -168,15 +182,6 @@ class _SignUpState extends State<SignUp> {
               ),
             ),
             const SizedBox(height: 40.0),
-            const Text(
-              "or Log In with",
-              style: TextStyle(
-                color: Color(0xFF273671),
-                fontSize: 22.0,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 30.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

@@ -1,250 +1,280 @@
-import 'package:fluentui_icons/fluentui_icons.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:ticket_app_final/base/res/media.dart';
 import 'package:ticket_app_final/base/res/style/app_style.dart';
-import 'package:ticket_app_final/base/widgets/app_column_text_layout.dart';
-import 'package:ticket_app_final/base/widgets/heading_text.dart';
-import 'package:ticket_app_final/base/widgets/text_style_third.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  final String userId; // ID người dùng được truyền vào.
+
+  const ProfileScreen({super.key, required this.userId});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? userData; // Thông tin người dùng
+  bool isLoading = true; // Trạng thái tải dữ liệu
+  String? errorMessage; // Lưu lỗi nếu xảy ra
+  int flightBookings = 1; // Số vé máy bay đã đặt
+  int hotelBookings = 1; // Số khách sạn đã đặt
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      // Lấy dữ liệu người dùng từ Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(widget.userId)
+          .get();
+
+      if (!userDoc.exists) {
+        setState(() {
+          errorMessage = 'Không tìm thấy thông tin người dùng!';
+          isLoading = false;
+        });
+        return;
+      }
+
+      setState(() {
+        userData = userDoc.data();
+        flightBookings = userData!['flightBookings'] ?? 1;
+        hotelBookings = userData!['hotelBookings'] ?? 1;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Đã xảy ra lỗi khi tải dữ liệu: $e';
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Scaffold(
-        backgroundColor: AppStyles.bgColor,
-        body: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          children: [
-            const Padding(padding: EdgeInsets.only(top: 40)),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 86,
-                  height: 86,
-                  decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  image: const DecorationImage(
-                    image: 
-                      AssetImage(AppMedia.logo),
-                        fit: BoxFit.cover,
-                  )
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Hồ sơ cá nhân'),
+        backgroundColor: AppStyles.primaryColor,
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : errorMessage != null
+              ? Center(
+                  child: Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(width: 10,),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const HeadingText(text: "Book Tickets", isColor: false,),
-                    Text("Đà Nẵng", style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade500
-                    ),),
-                    const SizedBox(height: 8,),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppStyles.profileLocationColor,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppStyles.profileTextColor,
+                )
+              : userData == null
+                  ? const Center(
+                      child: Text('Không tìm thấy thông tin người dùng.'))
+                  : SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Ảnh đại diện
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundImage: userData!['avatarUrl'] != null &&
+                                      userData!['avatarUrl'].isNotEmpty
+                                  ? NetworkImage(userData!['avatarUrl'])
+                                  : const AssetImage(
+                                          'assets/images/user_avatar.jpg')
+                                      as ImageProvider,
                             ),
-                            child: const Icon(
-                              FluentSystemIcons.ic_fluent_shield_filled,
-                              color: Colors.white,
-                              size: 15,
+                            const SizedBox(height: 20),
+
+                            const SizedBox(height: 20),
+
+                            // Card chứa thông tin chi tiết
+                            Card(
+                              elevation: 5,
+                              margin: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(15),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Họ và tên:',
+                                          style:
+                                              AppStyles.headLineStyle3.copyWith(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          userData!['name'] ?? "Tên không rõ",
+                                          style:
+                                              AppStyles.headLineStyle1.copyWith(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 5),
+                                      ],
+                                    ),
+                                    const Divider(height: 20, thickness: 1),
+
+                                    // Số điện thoại
+                                    Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Email:',
+                                            style: AppStyles.headLineStyle3
+                                                .copyWith(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            userData!['email'] ??
+                                                "Email không rõ",
+                                            style: AppStyles.headLineStyle2
+                                                .copyWith(
+                                              fontSize: 16,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ]
+                                      ),
+                                      const Divider(height: 20, thickness: 1),
+
+                                    // Ngày tạo
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Ngày tạo tài khoản:',
+                                          style:
+                                              AppStyles.headLineStyle3.copyWith(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          userData!['createdAt'] != null
+                                              ? (userData!['createdAt']
+                                                      as Timestamp)
+                                                  .toDate()
+                                                  .toString()
+                                                  .split(' ')[0]
+                                              : "Không rõ",
+                                          style:
+                                              AppStyles.headLineStyle3.copyWith(
+                                            fontSize: 16,
+                                            color: Colors.blueAccent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(height: 20, thickness: 1),
+
+                                    // Số vé máy bay đã đặt
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Số vé máy bay đã đặt:',
+                                          style:
+                                              AppStyles.headLineStyle3.copyWith(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          '$flightBookings',
+                                          style:
+                                              AppStyles.headLineStyle3.copyWith(
+                                            fontSize: 16,
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(height: 20, thickness: 1),
+
+                                    // Số khách sạn đã đặt
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Số khách sạn đã đặt:',
+                                          style:
+                                              AppStyles.headLineStyle3.copyWith(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          '$hotelBookings',
+                                          style:
+                                              AppStyles.headLineStyle3.copyWith(
+                                            fontSize: 16,
+                                            color: Colors.blueAccent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 5,),
-                          Text("Premium status", style: TextStyle(color: AppStyles.profileTextColor, fontWeight: FontWeight.w500),)
-                        ],
-                      )
-                    )
-                  ],
-                ),
-                Expanded(child: Container(
-                  
-                )),
-                Text("Edit", style: TextStyle(
-                  color: AppStyles.primaryColor, 
-                  fontWeight: FontWeight.w300
-                ),)
-              ],
-            ),
-            const SizedBox(height: 8,),
-            Divider(color: Colors.grey.shade300,),
-      
-            Stack(
-              children: [
-                Container(
-                  height: 90,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppStyles.primaryColor,
-                    borderRadius: BorderRadius.circular(18) 
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        maxRadius: 25,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          FluentSystemIcons.ic_fluent_lightbulb_filament_filled,
-                          color: AppStyles.primaryColor,
-                          size: 27,
+
+                            // Nút chỉnh sửa thông tin
+                            const SizedBox(height: 20),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                // Thêm chức năng chỉnh sửa tại đây
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        "Chức năng chỉnh sửa chưa được hỗ trợ."),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.edit),
+                              label: const Text("Chỉnh sửa thông tin"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppStyles.primaryColor,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8,),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const TextStyleThird(
-                            text: "Bạn có một giải thưởng mới", 
-                            isColor: null,
-                          ), 
-                          Text(
-                            "Bạn có 50 chuyến bay trong một năm",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withOpacity(0.8)
-                            ),
-                          )
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: -40,
-                  right: -45,
-                  child: Container(
-                    padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(width: 18, color: const Color(0xFF264CD2))
                     ),
-                ))
-              ],
-            ),
-            const SizedBox(height: 25,),
-            Text("Dặm tích lũy", style: AppStyles.headLineStyle2,),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                color: AppStyles.bgColor
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 15,),
-                  Text("192802", style: TextStyle(
-                    fontSize: 45, 
-                    color: AppStyles.textColor,
-                    fontWeight: FontWeight.w600
-                  ),),
-                  const SizedBox(height: 25,),
-                  //row-text
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween ,
-                    children: [
-                      Text(
-                        "Dặm tích lũy",
-                        style: AppStyles.headLineStyle4.copyWith(fontSize: 16),
-                      ),
-                      Text(
-                        "16/7",
-                        style: AppStyles.headLineStyle4.copyWith(fontSize: 16),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 8,),
-                  Divider(color: Colors.grey.shade300,),
-                  const SizedBox(height: 8,),
-                  // row-column
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppColumnTextLayout(
-                        topText: "23 402", 
-                        bottomText: "Dặm", 
-                        alignment: CrossAxisAlignment.start,
-                        isColor: false,
-                      ),
-                      AppColumnTextLayout(
-                        topText: "Hãng hàng không CO", 
-                        bottomText: "Nhận được từ", 
-                        alignment: CrossAxisAlignment.end,
-                        isColor: false,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8,),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppColumnTextLayout(
-                        topText: "24", 
-                        bottomText: "Dặm", 
-                        alignment: CrossAxisAlignment.start,
-                        isColor: false,
-                      ),
-                      AppColumnTextLayout(
-                        topText: "McDoanal's", 
-                        bottomText: "Nhận được từ", 
-                        alignment: CrossAxisAlignment.end,
-                        isColor: false,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8,),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppColumnTextLayout(
-                        topText: "52 340", 
-                        bottomText: "Dặm", 
-                        alignment: CrossAxisAlignment.start,
-                        isColor: false,
-                      ),
-                      AppColumnTextLayout(
-                        topText: "DBestech", 
-                        bottomText: "Nhận được từ", 
-                        alignment: CrossAxisAlignment.end,
-                        isColor: false,
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 20,),
-                  InkWell(
-                    onTap: () {
-      
-                    },
-                    child: Text(
-                      "Làm thế nào để có thêm dặm",
-                      style: AppStyles.textStyle.copyWith(
-                        color: AppStyles.primaryColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
     );
   }
 }
