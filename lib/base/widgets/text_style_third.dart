@@ -17,8 +17,8 @@ class TextStyleThird extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-        color: isColor ? color : Colors.black, // Use color property
-        fontSize: isColor ? 18 : 16, // Adjust based on isColor flag
+        color: isColor ? color : Colors.grey, // Use color property
+        fontSize: isColor ? 16 : 14, // Adjust based on isColor flag
         fontWeight: FontWeight.bold,
       ),
     );

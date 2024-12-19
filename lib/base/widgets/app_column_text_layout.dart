@@ -22,7 +22,7 @@ class AppColumnTextLayout extends StatelessWidget {
       crossAxisAlignment: alignment,
       children: [
         TextStyleThird(
-          text: topText,
+          text: bottomText,
           isColor: isColor ?? true, // Sử dụng giá trị từ isColor
           color: isColor == true ? Colors.white : Colors.black, // Màu dựa trên isColor
         ),
@@ -30,7 +30,7 @@ class AppColumnTextLayout extends StatelessWidget {
           height: 5,
         ),
         TextStyleFourth(
-          text: bottomText,
+          text: topText,
           isColor: isColor ?? true, // Sử dụng giá trị từ isColor
           color: isColor == true ? Colors.white70 : Colors.grey, // Màu dựa trên isColor
         ),

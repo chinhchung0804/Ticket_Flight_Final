@@ -9,6 +9,7 @@ class TicketPromotion extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Row(
+      
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
@@ -55,7 +56,7 @@ class TicketPromotion extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                             width: size.width*0.44,
-                            height: 230,
+                            height: 330,
                             decoration: BoxDecoration(
                               color: const Color(0xFF3AB8B8),
                               borderRadius: BorderRadius.circular(18)
@@ -103,7 +104,7 @@ class TicketPromotion extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                         width: size.width*0.44,
-                        height: 230,
+                        height: 130,
                         decoration: BoxDecoration(
                           color: const Color(0xFFEC6545),
                           borderRadius: BorderRadius.circular(18),
@@ -116,7 +117,7 @@ class TicketPromotion extends StatelessWidget {
                             style: AppStyles.headLineStyle2
                                 .copyWith(color: Colors.white),
                           )),
-                          const SizedBox(height: 20,),
+                          const SizedBox(height: 10,),
                           RichText(
                             text: const TextSpan(children: [
                               TextSpan(

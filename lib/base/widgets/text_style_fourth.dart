@@ -21,7 +21,8 @@ class TextStyleFourth extends StatelessWidget {
       text,
       textAlign: align,
       style: AppStyles.headLineStyle4.copyWith(
-        color: isColor ? Colors.white : AppStyles.headLineStyle4.color,
+        color: isColor ? Colors.white : Colors.black,
+        fontSize: 16
       ),
     );
   }

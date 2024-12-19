@@ -3,16 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_icons/fluentui_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart';
 import 'package:ticket_app_final/base/res/media.dart';
 import 'package:ticket_app_final/base/res/style/app_style.dart';
 import 'package:ticket_app_final/base/utils/app_routes.dart';
 import 'package:ticket_app_final/base/widgets/app_double_text.dart';
-import 'package:ticket_app_final/base/widgets/heading_text.dart';
-import 'package:ticket_app_final/base/widgets/ticket_view.dart';
+import 'package:ticket_app_final/base/widgets/image_helper.dart';
 import 'package:ticket_app_final/controller/bottom_nav_controller.dart';
-import 'package:ticket_app_final/models/flight.dart';
-import 'package:ticket_app_final/models/hotels.dart';
-import 'package:ticket_app_final/screens/home/widgets/hotel_widget.dart';
+import 'package:ticket_app_final/models/popular_location.dart';
 import 'package:ticket_app_final/screens/search/search_screen.dart';
 import 'package:ticket_app_final/screens/ticket/ticket_order_screen.dart';
 import 'package:ticket_app_final/screens/profile/profile.dart';
@@ -24,7 +22,10 @@ class HomeScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return {};
 
-    final doc = await FirebaseFirestore.instance.collection('Users').doc(user.uid).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(user.uid)
+        .get();
     return doc.data() ?? {};
   }
 
@@ -79,6 +80,31 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildItemCategory(
+      Widget icon, Color color, Function() onTap, String title) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(
+              vertical: 10,
+            ),
+            child: icon,
+            decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10)),
+          ),
+          SizedBox(
+            height: 10,
+          ),
+          Text(title)
+        ],
+      ),
+    );
+  }
+
   // Home Page Content
   Widget _buildHomePage(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
@@ -89,32 +115,60 @@ class HomeScreen extends StatelessWidget {
         }
 
         final userData = snapshot.data ?? {};
-        final name = userData['name'] ?? 'Guest';  // Default to 'Guest' if name is not found
+        final name = userData['name'] ?? 'Guest';
 
-        return ListView(
+        return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          children: [
-            const SizedBox(height: 40),
-            _buildHeader(name), // Display the user's name
-            const SizedBox(height: 25),
-            _buildSearchBar(),
-            const SizedBox(height: 40),
-            AppDoubleText(
-              bigText: 'Upcoming Flights',
-              smallText: 'View all',
-              func: () => Navigator.pushNamed(context, AppRoutes.allTickets),
-            ),
-            const SizedBox(height: 20),
-            _buildFlightStream(context),  // Display the flight list
-            const SizedBox(height: 40),
-            AppDoubleText(
-              bigText: 'Hotels',
-              smallText: 'View all',
-              func: () => Navigator.pushNamed(context, AppRoutes.allHotels),
-            ),
-            const SizedBox(height: 20),
-            _buildHotelStream(context),  // Display the hotel list
-          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 25),
+              _buildHeader(name),
+              const SizedBox(height: 30),
+              _buildSearchBar(context),
+              const SizedBox(height: 25),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildItemCategory(
+                      ImageHelper.loadFromAsset(
+                        'assets/images/hotel.jpg',
+                        width: 80,
+                        height: 80,
+                      ),
+                      const Color(0xffFE9C5E),
+                      () =>
+                          Navigator.of(context).pushNamed(AppRoutes.allHotels),
+                      'Hotels',
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: _buildItemCategory(
+                      ImageHelper.loadFromAsset(
+                        'assets/images/flights.png',
+                        width: 80,
+                        height: 80,
+                      ),
+                      const Color(0xffF77777),
+                      () =>
+                          Navigator.of(context).pushNamed(AppRoutes.allTickets),
+                      'Flights',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
+              AppDoubleText(
+                bigText: 'Popular Destinations',
+                smallText: 'See all',
+                func: () => Navigator.pushNamed(context, AppRoutes.allHotels),
+              ),
+              const SizedBox(height: 20),
+              _buildPopularLocationStream(context),
+            ],
+          ),
         );
       },
     );
@@ -149,94 +203,143 @@ class HomeScreen extends StatelessWidget {
   }
 
   // Search Bar Widget
-  Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: const Color(0xFFF4F6FD),
-      ),
-      child: const Row(
-        children: [
-          Icon(
-            FluentSystemIcons.ic_fluent_search_regular,
-            color: Color(0xFFBFC205),
-          ),
-          SizedBox(width: 10),
-          Text(
-            "Search",
-            style: TextStyle(fontSize: 16, color: Color(0xFFBFC205)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Flight Stream
-  Widget _buildFlightStream(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('Flights').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("No flights available."));
-        }
-
-        var flightList = snapshot.data!.docs.map((doc) {
-          return Flight.fromMap(doc.data() as Map<String, dynamic>);
-        }).toList();
-
-        return _buildHorizontalList(
-          items: flightList,
-          builder: (flight) => TicketView(ticket: flight),
-          onTap: (index) => Navigator.pushNamed(
-            context,
-            AppRoutes.ticketScreen,
-            arguments: {
-              'index': index,
-              'flightList': flightList,
-            },
-          ),
+  Widget _buildSearchBar(BuildContext context) {
+    return GestureDetector(
+       onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SearchScreen()),
         );
-      },
+    },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: const Color(0xFFF4F6FD),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              FluentSystemIcons.ic_fluent_search_regular,
+              color: Color(0xFFBFC205),
+            ),
+            SizedBox(width: 10),
+            Text(
+              "Search",
+              style: TextStyle(fontSize: 16, color: Color(0xFFBFC205)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  // Hotel Stream
-  Widget _buildHotelStream(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('Hotels').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  Widget _buildPopularLocationStream(BuildContext context) {
+  return StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance.collection('PopularLocations').snapshots(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("No hotels available."));
-        }
+      if (snapshot.hasError) {
+        debugPrint("Error fetching PopularLocations: ${snapshot.error}");
+        return const Center(child: Text("An error occurred while fetching data."));
+      }
 
-        var hotelList = snapshot.data!.docs.map((doc) {
-          return Hotel.fromMap(doc.data() as Map<String, dynamic>);
-        }).toList();
+      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return const Center(child: Text("No popular locations available."));
+      }
 
-        return _buildHorizontalList(
-          items: hotelList,
-          builder: (hotel) => HotelWidget(hotel: hotel),
-          onTap: (index) => Navigator.pushNamed(
-            context,
-            AppRoutes.hotelDetail,
-            arguments: {
-              'index': index,
-              'hotelList': hotelList,
-            },
-          ),
+      // Chuyển đổi dữ liệu từ Firestore thành danh sách các đối tượng PopularLocations
+      final List<PopularLocations> locations = snapshot.data!.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        // Xử lý dữ liệu bị thiếu bằng cách cung cấp giá trị mặc định
+        return PopularLocations(
+          name: data['name'] ?? 'Unknown Location',
+          image: data['image'] ?? '',
+          description: data['description'] ?? '',
+          images: List<String>.from(data['images'] ?? []),
+          airport: data['airport'] ?? 'Unknown',
         );
-      },
-    );
-  }
+      }).toSet().toList(); // Loại bỏ trùng lặp nếu cần
+
+      return ListView.builder(
+        shrinkWrap: true, // Cho phép ListView vừa với nội dung
+        physics: const NeverScrollableScrollPhysics(), // Tránh xung đột cuộn
+        itemCount: locations.length,
+        itemBuilder: (context, index) {
+          final location = locations[index];
+          return GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              AppRoutes.locationDetail,
+              arguments: {
+                'index': index,
+                'locations': locations,
+              },
+            ),
+            child: Card(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: Stack(
+                children: [
+                  // Hình ảnh địa điểm
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: location.image.isNotEmpty
+                        ? Image.asset(
+                            'assets/images/${location.image}',
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.broken_image, size: 80),
+                          )
+                        : Container(
+                            height: 200,
+                            color: Colors.grey,
+                            child: const Center(
+                              child: Icon(Icons.image_not_supported, size: 80),
+                            ),
+                          ),
+                  ),
+
+                  // Tên địa điểm nằm trên hình ảnh
+                  Positioned(
+                    bottom: 10,
+                    left: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        location.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+
+
 
   // Horizontal List Builder
   Widget _buildHorizontalList<T>({
@@ -244,18 +347,18 @@ class HomeScreen extends StatelessWidget {
     required Widget Function(T) builder,
     required Function(int) onTap,
   }) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: items.take(3).map((item) {
-          final index = items.indexOf(item);
-          return GestureDetector(
-            onTap: () => onTap(index),
-            child: builder(item),
-          );
-        }).toList(),
+    return Expanded(
+      child: SingleChildScrollView(
+        child: Row(
+          children: items.take(3).map((item) {
+            final index = items.indexOf(item);
+            return GestureDetector(
+              onTap: () => onTap(index),
+              child: builder(item),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
 }
-

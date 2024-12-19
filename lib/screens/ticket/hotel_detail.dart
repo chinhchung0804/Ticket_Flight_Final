@@ -39,13 +39,11 @@ class HotelDetail extends StatelessWidget {
         'bookedAt': Timestamp.now(),  // Ghi nhận thời gian đặt
       });
 
-      // Hiển thị thông báo thành công
-      print('Hotel booked successfully!');
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Booking Success'),
-          content: const Text('Hotel has been booked successfully!'),
+          title: const Text('Đặt thành công'),
+          content: const Text('Khách sạn đã được đặt thành công!'),
           actions: [
             TextButton(
               onPressed: () {
@@ -125,7 +123,7 @@ class HotelDetail extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
-                    "Gallery",
+                    "Hình ảnh thêm",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -164,7 +162,7 @@ class HotelDetail extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    "Price: ${(hotel.price.toStringAsFixed(3))}/Đêm", 
+                    "Giá từ: ${(hotel.price.toStringAsFixed(3))}đ/Đêm", 
                     style: AppStyles.headLineStyle3.copyWith(fontSize: 24),
                   ),
                 ),
@@ -178,7 +176,7 @@ class HotelDetail extends StatelessWidget {
                       _bookHotel(hotel, context);
                     },
                     child: const Text(
-                      'Book Now',
+                      'Đặt vé',
                       style: TextStyle(fontSize: 18),
                     ),
                     style: ElevatedButton.styleFrom(
