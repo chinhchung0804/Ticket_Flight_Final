@@ -10,54 +10,71 @@ class AllTickets extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final arguments =
+        ModalRoute.of(context)?.settings.arguments as Map<String, String>?;
+    final String? departure = arguments?['departure']?.trim();
+    final String? arrival = arguments?['arrival']?.trim();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("All Tickets"),
         backgroundColor: AppStyles.bgColor,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Kết nối tới Firestore để lắng nghe dữ liệu từ bộ sưu tập 'Flights'
         stream: FirebaseFirestore.instance.collection('Flights').snapshots(),
         builder: (context, snapshot) {
-          // Hiển thị vòng tròn tải khi chờ dữ liệu
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Xử lý khi có lỗi
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          // Xử lý khi không có dữ liệu
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text('No tickets found.'));
           }
 
-          // Lấy danh sách vé từ Firestore
           final ticketsDocs = snapshot.data!.docs;
 
-          // Ánh xạ dữ liệu từ Firestore thành danh sách `Flight`
-          final List<Flight> flights = ticketsDocs.map((doc) {
+          final List<Flight> allFlights = ticketsDocs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
             return Flight.fromMap(data);
           }).toList();
 
-          // Hiển thị danh sách vé
+          // Lọc danh sách theo departure và arrival
+          final List<Flight> filteredFlights =
+              (departure != null && arrival != null)
+                  ? allFlights.where((flight) {
+                      final flightFromCode =
+                          flight.fromCode.trim().toLowerCase();
+                      final flightToCode = flight.toCode.trim().toLowerCase();
+                      final inputDeparture = departure.trim().toLowerCase();
+                      final inputArrival = arrival.trim().toLowerCase();
+
+                      return flightFromCode == inputDeparture &&
+                          flightToCode == inputArrival;
+                    }).toList()
+                  : allFlights;
+
+          if (filteredFlights.isEmpty) {
+            return const Center(
+                child: Text('No tickets match your search criteria.'));
+          }
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: flights.length,
+            itemCount: filteredFlights.length,
             itemBuilder: (context, index) {
-              final flight = flights[index];
+              final flight = filteredFlights[index];
               return GestureDetector(
                 onTap: () {
-                  // Chuyển tới TicketScreen khi bấm vào vé
                   Navigator.pushNamed(
                     context,
                     AppRoutes.ticketScreen,
                     arguments: {
-                      "index": index,          // Chỉ số vé được chọn
-                      "flightList": flights,   // Toàn bộ danh sách vé
+                      "index": index,
+                      "flightList": filteredFlights,
                     },
                   );
                 },
@@ -67,6 +84,7 @@ class AllTickets extends StatelessWidget {
                     ticket: flight,
                     wholeScreen: true,
                     isColor: false,
+                    hideDetails: false,
                   ),
                 ),
               );

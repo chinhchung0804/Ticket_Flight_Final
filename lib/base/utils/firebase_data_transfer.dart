@@ -1,164 +1,94 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-// Dữ liệu từ all_json.dart
-List<Map<String, dynamic>> ticketList = [
-  {
-    'from': {
-      'code': "DN",
-      'name': "Đà Nẵng",
-    },
-    'to': {
-      'code': "SG",
-      'name': "Sài Gòn",
-    },
-    'flying_time': '8h 30M',
-    'date': "01/05",
-    'thoi_gian_khoi_hanh': "08:00 AM",
-    'Number': 23
-  },
-  {
-    'from': {
-      'code': "DN",
-      'name': "Đà Nẵng",
-    },
-    'to': {
-      'code': "HN",
-      'name': "Hà Nội",
-    },
-    'flying_time': '9h 30M',
-    'date': "01/05",
-    'thoi_gian_khoi_hanh': "09:00 AM",
-    'Number': 25
-  },
-  {
-    'from': {
-      'code': "HN",
-      'name': "Hà Nội",
-    },
-    'to': {
-      'code': "SG",
-      'name': "Sài Gòn",
-    },
-    'flying_time': '11h 30M',
-    'date': "01/05",
-    'thoi_gian_khoi_hanh': "11:00 AM",
-    'Number': 5
-  },
-  {
-    'from': {
-      'code': "Hue",
-      'name': "Huế",
-    },
-    'to': {
-      'code': "SG",
-      'name': "Sài Gòn",
-    },
-    'flying_time': '7h 30M',
-    'date': "01/05",
-    'thoi_gian_khoi_hanh': "07:00 AM",
-    'Number': 15
-  },
-  {
-    'from': {
-      'code': "HN",
-      'name': "Hà Nội",
-    },
-    'to': {
-      'code': "Hue",
-      'name': "Huế",
-    },
-    'flying_time': '14h 30M',
-    'date': "01/05",
-    'thoi_gian_khoi_hanh': "2:00 PM",
-    'Number': 18
-  },
-];
-
-List<Map<String, dynamic>> hotelList = [
-  {
-    'image': 'hotel_room_dn_1.jpg',
-    'place': 'Open Space',
-    'destination': 'Đà Nẵng',
-    'price': '400.000đ',
-    'detail': 'Tọa lạc ở nội thành Đà Nẵng và cách bãi biển Mỹ An 800 m, Le Indochina Hotel & Beach Da Nang City sở hữu hồ bơi ngoài trời cùng trung tâm spa và cung cấp WiFi miễn phí trong toàn khuôn viên. Các phòng nghỉ tại đây đều có máy lạnh, ghế sofa, tủ quần áo và két an toàn. Phòng tắm riêng được trang bị bồn tắm/vòi sen, bồn rửa vệ sinh và áo choàng tắm, dép cùng đồ vệ sinh cá nhân miễn phí. Nhân viên tại quầy lễ tân 24 giờ sẵn sàng hỗ trợ quý khách bố trí chỗ để hành lý. Chỗ nghỉ còn có bồn tắm nóng cùng phòng xông hơi khô và cũng cung cấp xe đạp miễn phí. Le Indochina Hotel & Beach Da Nang City nằm trong bán kính 3,2 km từ Cầu Khóa Tình yêu và 3,4 km từ Bảo tàng Chăm. Sân bay quốc tế Đà Nẵng cách chỗ nghỉ 5 km. Chỗ nghỉ cung cấp dịch vụ đưa đón sân bay có tính phí. Quý khách có thể thưởng thức các bữa ăn tại nhà hàng trong khuôn viên.',
-    'images': [
-      'image_dn_1.jpg',
-      'image_dn_2.jpg',
-      'image_dn_3.jpg',
-    ]
-  },
-  {
-    'image': 'hotel_room_sg_1.jpg',
-    'place': 'Night Space',
-    'destination': 'Sài Gòn',
-    'price': '350.000đ',
-    'detail': 'Tọa lạc ở trung tâm TP. Hồ Chí Minh, cách Chợ Bến Thành 3 phút đi bộ, MG Daisy Boutique Hotel cung cấp các phòng có điều hòa và Wi-Fi miễn phí. Chỗ nghỉ nằm gần một số điểm tham quan nổi tiếng, cách Trung tâm Thương mại Vincom Center A khoảng chưa đến 1 km, Dinh Thống Nhất khoảng 12 phút đi bộ, Nhà thờ Đức Bà khoảng 1.1 km. Đây là chỗ nghỉ không gây dị ứng và nằm cách Bảo tàng Thành phố Hồ Chí Minh 8 phút đi bộ. Tại khách sạn, mỗi phòng đều có bàn làm việc, TV màn hình phẳng, phòng tắm riêng, ga trải giường và khăn tắm. Các phòng đều có tủ lạnh. Các điểm tham quan nổi tiếng gần MG Daisy Boutique Hotel bao gồm Trung tâm mua sắm Takashimaya Việt Nam, Công viên Tao Đàn và Ủy ban nhân dân Thành phố Hồ Chí Minh. Chỗ nghỉ cách Sân bay Quốc tế Tân Sơn Nhất 7 km và cung cấp dịch vụ đưa đón sân bay mất phí.',
-    'images': [
-      'image_sg_1.jpg',
-      'image_sg_2.jpg',
-      'image_sg_3.jpg',
-    ]
-  },
-  {
-    'image': 'hotel_room_hn_1.jpg',
-    'place': 'Close Space',
-    'destination': 'Hà Nội',
-    'price': '500.000đ',
-    'detail': 'Nằm tại vị trí thuận tiện ở Hà Nội, H Hotel Ha Noi cung cấp các phòng có điều hòa, sân hiên, Wi-Fi miễn phí và nhà hàng. Khách sạn 4 sao này có dịch vụ phòng và quầy lễ tân 24 giờ. Đây là chỗ nghỉ không hút thuốc và nằm cách Ô Quan Chưởng 9 phút đi bộ. Tại khách sạn, các phòng được thiết kế có bàn làm việc. Ngoài phòng tắm riêng với vòi sen và đồ vệ sinh cá nhân miễn phí, một số phòng tại H Hotel Ha Noi cũng có view thành phố. Các căn ở chỗ nghỉ được trang bị TV màn hình phẳng và máy sấy tóc. Chỗ nghỉ có phục vụ bữa sáng thực đơn buffet, thực đơn à la carte hoặc kiểu lục địa mỗi buổi sáng. Các điểm tham quan nổi tiếng gần H Hotel Ha Noi bao gồm Nhà hát múa rối Thăng Long, Hồ Hoàn Kiếm và Nhà thờ Thánh Joseph. Chỗ nghỉ cách Sân bay Quốc tế Nội Bài 24 km và cung cấp dịch vụ đưa đón sân bay mất phí.',
-    'images': [
-      'image_hn_1.jpg',
-      'image_hn_2.jpg',
-      'image_hn_3.jpg',
-    ]
-  },
-  {
-    'image': 'hotel_room_hue_1.jpg',
-    'place': 'Bach Ma',
-    'destination': 'Huế',
-    'price': '300.000đ',
-    'detail': 'Tọa lạc tại khu trung tâm thành phố Huế, cách Sông Hương và Cầu Tràng Tiền 5 phút lái xe, khách sạn này cung cấp các phòng nghỉ lắp máy điều hòa, khu vườn, nhà hàng trong khuôn viên. Wi-Fi lẫn chỗ đỗ xe riêng đều được cung cấp miễn phí ngay trong khuôn viên. Các phòng nghỉ tại ÊMM Hotel Hue có sàn lát gạch/đá cẩm thạch, ban công riêng, truyền hình vệ tinh màn hình phẳng, tủ lạnh mini và ấm đun nước điện. Phòng tắm riêng trong mỗi phòng được trang bị vòi sen, máy sấy tóc, đồ vệ sinh cá nhân miễn phí, dép và áo choàng tắm để tạo sự thoải mái cho du khách. Đội ngũ nhân viên tại quầy lễ tân làm việc 24/24 có thể hỗ trợ du khách với các dịch vụ phòng giữ hành lý, cho thuê xe hơi và dịch vụ đưa đón sân bay có thể được thu xếp kèm phụ phí. Nhà hàng Spiceviet phục vụ các món ăn Huế chính thống được chế biến bằng những nguyên liệu địa phương. Yen Restaurant là nhà hàng phục vụ ăn uống suốt cả ngày với một loạt các món ăn Việt Nam và quốc tế. Chợ Đông Ba và Tử Cấm Thành đều cách ÊMM Hotel Hue 2 km trong khi ga tàu Huế cách đó 1,45 km. Sân bay gần nhất là sân bay quốc tế Phú Bài, cách nơi nghỉ 15 km.',
-    'images': [
-      'image_hue_1.jpg',
-      'image_hue_2.jpg',
-      'image_hue_3.jpg',
-    ]
-  },
-];
+import 'package:ticket_app_final/base/utils/all_json.dart';
 
 // Hàm để thêm vé máy bay vào Firestore
 Future<void> addTicketData() async {
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Lặp qua danh sách vé máy bay và thêm vào Firestore
-  for (var ticket in ticketList) {
-    await _firestore.collection('Flights').add({
-      'from': ticket['from'],
-      'to': ticket['to'],
-      'flying_time': ticket['flying_time'],
-      'date': ticket['date'],
-      'thoi_gian_khoi_hanh': ticket['thoi_gian_khoi_hanh'],
-      'Number': ticket['Number'],
-    });
+  // Kiểm tra danh sách không rỗng trước khi thêm
+  if (ticketList.isNotEmpty) {
+    for (var ticket in ticketList) {
+      try {
+        await _firestore.collection('Flights').add({
+          'from': ticket['from'],
+          'to': ticket['to'],
+          'price': ticket['price'],
+          'flying_time': ticket['flying_time'],
+          'thoi_gian_khoi_hanh': ticket['thoi_gian_khoi_hanh'],
+        });
+      } catch (e) {
+        print('Error adding ticket: $e');
+      }
+    }
+    print("Ticket data added successfully!");
+  } else {
+    print("No ticket data found to add!");
   }
-
-  print("Ticket data added successfully!");
 }
 
 // Hàm để thêm khách sạn vào Firestore
 Future<void> addHotelData() async {
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Lặp qua danh sách khách sạn và thêm vào Firestore
-  for (var hotel in hotelList) {
-    await _firestore.collection('Hotels').add({
-      'image': hotel['image'],
-      'place': hotel['place'],
-      'destination': hotel['destination'],
-      'price': hotel['price'],
-      'detail': hotel['detail'],
-      'images': hotel['images'],
-    });
+  if (hotelList.isNotEmpty) {
+    for (var hotel in hotelList) {
+      try {
+        await _firestore.collection('Hotels').add({
+          'image': hotel['image'],
+          'place': hotel['place'],
+          'destination': hotel['destination'],
+          'price': hotel['price'],
+          'detail': hotel['detail'],
+          'images': hotel['images'],
+        });
+      } catch (e) {
+        print('Error adding hotel: $e');
+      }
+    }
+    print("Hotel data added successfully!");
+  } else {
+    print("No hotel data found to add!");
   }
+}
 
-  print("Hotel data added successfully!");
+// Hàm để thêm các địa điểm nổi tiếng vào Firestore
+Future<void> addPopularLocations() async {
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  if (locations.isNotEmpty) {
+    for (var location in locations) {
+      try {
+        await _firestore.collection('PopularLocations').add({
+          'name': location['name'],
+          'description': location['description'],
+          'image': location['image'],
+          'airport': location['airport'],
+          'images': location['images'],
+        });
+      } catch (e) {
+        print('Error adding location: $e');
+      }
+    }
+    print("Popular Location data added successfully!");
+  } else {
+    print("No location data found to add!");
+  }
+}
+
+Future<void> deleteAllTickets() async {
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  try {
+    // Lấy tất cả các tài liệu trong collection 'Flights'
+    QuerySnapshot snapshot = await _firestore.collection('Flights').get();
+
+    // Duyệt qua các tài liệu và xóa từng tài liệu
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete();  // Xóa tài liệu theo reference
+    }
+
+    print("All tickets deleted successfully!");
+  } catch (e) {
+    print('Error deleting tickets: $e');
+  }
 }

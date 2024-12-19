@@ -30,13 +30,15 @@ class BookHotel {
     return BookHotel(
       id: snapshot.id, // Lấy ID từ Firestore
       userId: data['userId'] ?? '', // ID của người dùng
-      destination: data['destination'] ?? '',
-      detail: data['detail'] ?? '',
-      image: data['image'] ?? '',
       images: List<String>.from(data['images'] ?? []),
-      place: data['place'] ?? '',
-      price: (data['price'] ?? 0).toDouble(),
-      bookedAt: data['bookedAt'] ?? Timestamp.now(),
+      destination: data['destination'] is String ? data['destination'] : '',
+    place: data['place'] is String ? data['place'] : '',
+    detail: data['detail'] is String ? data['detail'] : '',
+    image: data['image'] is String ? data['image'] : 'default_image.png',
+    price: (data['price'] ?? 0).toDouble(),
+    bookedAt: data['bookedAt'] is Timestamp
+        ? data['bookedAt']
+        : Timestamp.now(),
     );
   }
 

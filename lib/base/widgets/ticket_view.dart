@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:ticket_app_final/base/res/style/app_style.dart';
 import 'package:ticket_app_final/base/widgets/app_column_text_layout.dart';
@@ -12,12 +14,14 @@ class TicketView extends StatelessWidget {
   final Flight ticket;
   final bool wholeScreen;
   final bool isColor;
+  final bool hideDetails; // Thêm thuộc tính để kiểm soát hiển thị chi tiết
 
   const TicketView({
     super.key,
     required this.ticket,
     this.wholeScreen = false,
     this.isColor = false,
+    this.hideDetails = false,
   });
 
   @override
@@ -129,44 +133,39 @@ class TicketView extends StatelessWidget {
               ),
             ),
 
-            // Phần vé màu cam (chi tiết ngày bay và mã chuyến bay)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isColor ? AppStyles.ticketColor : AppStyles.ticketOrange,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(isColor ? 0 : 21),
-                  bottomRight: Radius.circular(isColor ? 0 : 21),
+            // Phần vé màu cam (chi tiết thời gian khởi hành và giá vé)
+            if (!hideDetails)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isColor ? AppStyles.ticketColor : AppStyles.ticketOrange,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(isColor ? 0 : 21),
+                    bottomRight: Radius.circular(isColor ? 0 : 21),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        AppColumnTextLayout(
+                          topText: "Thời gian khởi hành",
+                          bottomText: ticket.departureTime,
+                          alignment: CrossAxisAlignment.start,
+                          isColor: true,
+                        ),
+                        AppColumnTextLayout(
+                          topText: "Giá vé",
+                          bottomText: "${ticket.price.toStringAsFixed(3)}đ",
+                          alignment: CrossAxisAlignment.end,
+                          isColor: true,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AppColumnTextLayout(
-                        topText: "Ngày",
-                        bottomText: ticket.date,
-                        alignment: CrossAxisAlignment.start,
-                        isColor: true,
-                      ),
-                      AppColumnTextLayout(
-                        topText: "Thời gian khởi hành",
-                        bottomText: ticket.departureTime,
-                        alignment: CrossAxisAlignment.center,
-                        isColor: true,
-                      ),
-                      AppColumnTextLayout(
-                        topText: "Số",
-                        bottomText: ticket.Number,
-                        alignment: CrossAxisAlignment.end,
-                        isColor: true,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),

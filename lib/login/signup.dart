@@ -65,7 +65,7 @@ class _SignUpState extends State<SignUp> {
           backgroundColor: Colors.green,
         ));
 
-        // Điều hướng đến HomeScreen
+        // Điều hướng đến LogIn
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LogIn()),

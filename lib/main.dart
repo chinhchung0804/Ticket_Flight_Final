@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import this for SystemChrome
+import 'package:flutter/services.dart';
+import 'package:get/get.dart'; // Import GetX
 import 'package:ticket_app_final/base/utils/app_routes.dart';
+import 'package:ticket_app_final/base/utils/firebase_data_transfer.dart';
 import 'package:ticket_app_final/login/signup.dart';
 import 'package:ticket_app_final/screens/home/all_hotels.dart';
 import 'package:ticket_app_final/screens/home/all_tickets.dart';
 import 'package:ticket_app_final/screens/home/home_screen.dart';
 import 'package:ticket_app_final/screens/ticket/hotel_detail.dart';
+import 'package:ticket_app_final/screens/ticket/location_detail.dart';
 import 'package:ticket_app_final/screens/ticket/ticket_screen.dart';
 
 void main() async {
@@ -16,6 +19,7 @@ void main() async {
   // Initialize Firebase
   try {
     await Firebase.initializeApp();
+    debugPrint("Firebase Initialized Successfully!");
   } catch (e) {
     debugPrint("Error initializing Firebase: $e");
   }
@@ -26,18 +30,28 @@ void main() async {
   runApp(const MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Ticket App',
       debugShowCheckedModeBanner: false,
       theme: _buildThemeData(),
-      initialRoute: AppRoutes.homeSignUp, // Trang bắt đầu
-      onGenerateRoute: _generateRoute,
+      initialRoute: AppRoutes.homeSignUp, // Initial page
+      getPages: _getPages(), // List of routes
+      unknownRoute: GetPage(
+        name: '/notfound',
+        page: () => const Scaffold(
+          body: Center(
+            child: Text(
+              "Page not found",
+              style: TextStyle(fontSize: 18, color: Colors.red),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -47,7 +61,7 @@ class MyApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       useMaterial3: true,
       scaffoldBackgroundColor: Colors.white,
-      fontFamily: 'Roboto', // Cài đặt font mặc định (nếu cần)
+      fontFamily: 'Roboto',
       textTheme: const TextTheme(
         bodyLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
         bodyMedium: TextStyle(fontSize: 16),
@@ -56,37 +70,25 @@ class MyApp extends StatelessWidget {
     );
   }
 
-  // Generate Routes Dynamically
-  Route<dynamic>? _generateRoute(RouteSettings settings) {
-    final arguments = settings.arguments;
-
-    switch (settings.name) {
-      case AppRoutes.homeSignUp:
-        return MaterialPageRoute(builder: (_) => const SignUp());
-      case AppRoutes.homePage:
-        return MaterialPageRoute(builder: (_) => const HomeScreen());
-      case AppRoutes.ticketScreen:
-        return MaterialPageRoute(
-          builder: (_) => const TicketScreen(),
-          settings: settings,
-        );
-      case AppRoutes.allTickets:
-        return MaterialPageRoute(builder: (_) => const AllTickets());
-      case AppRoutes.allHotels:
-        return MaterialPageRoute(builder: (_) => const AllHotels());
-      case AppRoutes.hotelDetail:
-        return MaterialPageRoute(
-          builder: (_) => const HotelDetail(),
-          settings: settings,
-        );
-      default:
-        return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(
-              child: Text("Page not found"),
-            ),
-          ),
-        );
-    }
+  // List of routes for GetX
+  List<GetPage> _getPages() {
+    return [
+      GetPage(name: AppRoutes.homeSignUp, page: () => const SignUp()),
+      GetPage(name: AppRoutes.homePage, page: () => const HomeScreen()),
+      GetPage(
+        name: AppRoutes.ticketScreen,
+        page: () => const TicketScreen(),
+      ),
+      GetPage(name: AppRoutes.allTickets, page: () => const AllTickets()),
+      GetPage(name: AppRoutes.allHotels, page: () => const AllHotels()),
+      GetPage(
+        name: AppRoutes.locationDetail,
+        page: () => const LocationDetail(),
+      ),
+      GetPage(
+        name: AppRoutes.hotelDetail,
+        page: () => const HotelDetail(),
+      ),
+    ];
   }
 }

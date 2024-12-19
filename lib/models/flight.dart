@@ -4,9 +4,7 @@ class Flight {
   final String toCode;
   final String toName;
   final String flyingTime;
-  final String date;
   final String departureTime;
-  final String Number; // Sửa từ `Number` thành `number` theo convention
   final double price;  // Thêm trường price
 
   Flight({
@@ -15,9 +13,7 @@ class Flight {
     required this.toCode,
     required this.toName,
     required this.flyingTime,
-    required this.date,
     required this.departureTime,
-    required this.Number,
     required this.price, // Khai báo price
   });
 
@@ -29,9 +25,7 @@ class Flight {
       toCode: map['to']['code'] ?? '',
       toName: map['to']['name'] ?? '',
       flyingTime: map['flying_time'] ?? '',
-      date: map['date'] ?? '',
       departureTime: map['thoi_gian_khoi_hanh'] ?? '',
-      Number: map['Number']?.toString() ?? '',
       price: (map['price'] ?? 0.0).toDouble(), // Xử lý giá trị `price`
     );
   }
@@ -48,9 +42,7 @@ class Flight {
         'name': toName,
       },
       'flying_time': flyingTime,
-      'date': date,
       'thoi_gian_khoi_hanh': departureTime,
-      'Number': Number,
       'price': price, // Đảm bảo lưu trường price vào Firestore
     };
   }
