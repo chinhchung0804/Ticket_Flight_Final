@@ -9,6 +9,11 @@ class AllHotels extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Lấy điều kiện tìm kiếm từ arguments
+    final arguments =
+        ModalRoute.of(context)?.settings.arguments as Map<String, String>?;
+    final String? searchDestination = arguments?['destination']?.trim();
+
     return Scaffold(
       backgroundColor: AppStyles.bgColor,
       appBar: AppBar(
@@ -23,7 +28,12 @@ class AllHotels extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('Hotels').snapshots(),
+          stream: searchDestination == null
+              ? FirebaseFirestore.instance.collection('Hotels').snapshots()
+              : FirebaseFirestore.instance
+                  .collection('Hotels')
+                  .where('destination', isEqualTo: searchDestination)
+                  .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -34,7 +44,12 @@ class AllHotels extends StatelessWidget {
             }
 
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Center(child: Text("No hotels available."));
+              return const Center(
+                child: Text(
+                  "No hotels match your search.",
+                  style: TextStyle(fontSize: 16),
+                ),
+              );
             }
 
             // Lấy danh sách Hotel từ Firestore
@@ -115,7 +130,8 @@ class HotelGridView extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               "${hotel.place} - ${hotel.destination}",
-              style: AppStyles.headLineStyle3.copyWith(color: AppStyles.kakiColor),
+              style: AppStyles.headLineStyle3
+                  .copyWith(color: AppStyles.kakiColor),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

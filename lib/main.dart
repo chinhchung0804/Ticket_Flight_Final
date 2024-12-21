@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart'; // Import GetX
 import 'package:ticket_app_final/base/utils/app_routes.dart';
 import 'package:ticket_app_final/base/utils/firebase_data_transfer.dart';
@@ -52,6 +53,15 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+      localizationsDelegates: const [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: [
+      const Locale('en', ''), // Tiếng Anh
+      const Locale('vi', ''), // Tiếng Việt
+    ],
     );
   }
 

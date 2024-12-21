@@ -41,8 +41,8 @@ class LocationDetail extends StatelessWidget {
     if (arguments == null ||
         !arguments.containsKey('index') ||
         !arguments.containsKey('locations')) {
-      return Scaffold(
-        body: const Center(
+      return const Scaffold(
+        body: Center(
           child: Text("Invalid data. Please try again."),
         ),
       );
@@ -65,7 +65,7 @@ class LocationDetail extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
