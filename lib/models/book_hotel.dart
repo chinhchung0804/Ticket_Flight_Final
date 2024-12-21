@@ -9,6 +9,9 @@ class BookHotel {
   final List<String> images;
   final String place;
   final double price;
+  final double adults;
+  final double beds;
+  final double children;
   final Timestamp bookedAt;
 
   BookHotel({
@@ -19,6 +22,9 @@ class BookHotel {
     required this.image,
     required this.images,
     required this.place,
+    required this.adults,
+    required this.beds,
+    required this.children,
     required this.price,
     required this.bookedAt,
   });
@@ -36,6 +42,9 @@ class BookHotel {
     detail: data['detail'] is String ? data['detail'] : '',
     image: data['image'] is String ? data['image'] : 'default_image.png',
     price: (data['price'] ?? 0).toDouble(),
+     adults: (data['adults'] ?? 0).toDouble(),
+      beds: (data['beds'] ?? 0).toDouble(),
+       children: (data['children'] ?? 0).toDouble(),
     bookedAt: data['bookedAt'] is Timestamp
         ? data['bookedAt']
         : Timestamp.now(),
@@ -52,6 +61,9 @@ class BookHotel {
       'images': images,
       'place': place,
       'price': price,
+      'adults': adults,
+      'beds': beds,
+      'children': children,
       'bookedAt': bookedAt,
     };
   }
